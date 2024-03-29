@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Recipe from "./recipe.js";
 
 const userSchema = new mongoose.Schema({
         email: {
@@ -19,8 +20,9 @@ const userSchema = new mongoose.Schema({
             required: true,
         },
         favorites: {
-            type: [String],
-            default: [],
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "Recipe",
+            required: false,
         },
     },
     {
