@@ -5,3 +5,6 @@
 /front/node_modules
 /front/.idea
 /front/.vscode
+.turbo
+node_modules
+package-lock.json
