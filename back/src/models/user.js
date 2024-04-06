@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import Recipe from "./recipe.js";
 
 const userSchema = new mongoose.Schema({
         email: {
@@ -30,5 +29,4 @@ const userSchema = new mongoose.Schema({
     }
 );
 
-const User = mongoose.model("User", userSchema);
-export default User;
+export default mongoose.model("User", userSchema);

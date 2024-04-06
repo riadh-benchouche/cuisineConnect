@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import User from "./user.js";
-import Recipe from "./recipe.js";
 
 const reviewSchema = new mongoose.Schema(
     {
@@ -14,12 +12,12 @@ const reviewSchema = new mongoose.Schema(
             ref: "Recipe",
             required: true,
         },
-        rating: {
-            type: Number,
-            required: true,
-        },
         comment: {
             type: String,
+            required: true,
+        },
+        rating: {
+            type: Number,
             required: true,
         },
     },
@@ -28,5 +26,4 @@ const reviewSchema = new mongoose.Schema(
     }
 );
 
-const Review = mongoose.model("Review", reviewSchema);
-export default Review;
+export default mongoose.model("Review", reviewSchema)

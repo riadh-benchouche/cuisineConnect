@@ -1,48 +1,34 @@
 import mongoose from "mongoose";
-import Review from "./reveiw.js";
-
-const ingredientSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-    },
-    amount: {
-        type: String,
-        required: true,
-    },
-    unit: {
-        type: String,
-        required: true,
-    },
-});
 
 const recipeSchema = new mongoose.Schema(
     {
-        title: {
+        name: {
             type: String,
             required: true,
         },
+        ingredients: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Ingredient',
+            required: true,
+        }],
         description: {
             type: String,
-            required: true,
-        },
-        ingredients: {
-            type: [ingredientSchema],
             required: true,
         },
         duration: {
             type: Number,
             required: true,
         },
-        avgRating: {
-            type: Number,
-            default: 0,
-        },
-        reviews: {
-            type: [Review.schema],
-            required: false
-        },
+        reviews: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Review',
+            required: false,
+        }],
         image: {
+            type: String,
+            required: true,
+        },  
+        difficulty: {
             type: String,
             required: true,
         },
@@ -57,5 +43,4 @@ const recipeSchema = new mongoose.Schema(
     }
 );
 
-const Recipe = mongoose.model("Recipe", recipeSchema);
-export default Recipe;
+export default mongoose.model("Recipe", recipeSchema);

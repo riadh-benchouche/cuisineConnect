@@ -18,7 +18,7 @@ const register = async (req, res) => {
         const token = crypto.randomBytes(64).toString("hex");
 
         const user = await User.create({name, email, password: hashedPassword, token});
-        // Send user object without password and token
+
         res.status(200).json({user: {_id: user._id, name: user.name, email: user.email}});
     } catch (error) {
         res.status(500).json({message: error.message});

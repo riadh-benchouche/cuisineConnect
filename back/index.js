@@ -4,6 +4,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import authRouter from './src/routes/authRouter.js';
+import catRouter from './src/routes/categoryRouter.js';
+import ingRouter from './src/routes/ingredientRouter.js';
+import reviewRouter from './src/routes/reviewRouter.js';
+import recipeRouter from './src/routes/recipeRouter.js';
 
 dotenv.config();
 const corsOptions = {
@@ -18,6 +22,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use('/auth', authRouter);
+app.use('/category', catRouter);
+app.use('/ingredient', ingRouter);
+app.use('/review', reviewRouter);
+app.use('/recipe', recipeRouter);
 
 try {
     mongoose.connect(process.env.MONGO_URL).then(r => console.log("Connected to MongoDB"));
