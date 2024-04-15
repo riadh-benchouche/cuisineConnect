@@ -3,9 +3,9 @@ import mongoose from "mongoose";
 
 const createRecipe = async (req, res) => {
     try {
-        const { name, ingredients, description, duration, image, difficulty, category } = req.body;
+        const {name, ingredients, description, duration, image, difficulty, category} = req.body;
 
-        const { ObjectId } = mongoose.Types;
+        const {ObjectId} = mongoose.Types;
 
         // Convertir les IDs des ingrédients en ObjectId
         const ingredientIDs = ingredients.map(ingredientID => new ObjectId(ingredientID));
@@ -24,28 +24,45 @@ const createRecipe = async (req, res) => {
         await newRecipe.save();
         res.status(201).json(newRecipe);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({message: error.message});
     }
 }
 
 const getRecipes = async (req, res) => {
     try {
-        const recipes = await Recipe.find().populate("ingredients", ["name", "quantity"]).populate("category", ["name"]).populate("reviews", ["rating", "comment"]).exec();
+        const recipes = await Recipe.find({})
+            .populate("ingredients", ["name", "quantity"])
+            .populate("category", ["name"])
+            .populate("reviews", ["rating", "comment"])
+            .exec();
         res.status(200).json(recipes);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({message: error.message});
     }
 }
 
 const getRecipeById = async (req, res) => {
     try {
-        const recipe = await Recipe.findById(req.params.id);
+        const recipe = await Recipe.findById(req.params.id)
+            .populate("ingredients", ["name", "quantity"])
+            .populate("category", ["name"])
+            .populate({
+                path: "reviews",
+                select: ["rating", "comment", "user", "createdAt"],
+                model: "Review",
+                populate: {
+                    path: "user",
+                    select: "name",
+                    model: "User"
+                }
+            })
+            .exec();
         if (!recipe) {
-            return res.status(404).json({ message: "Recipe not found" });
+            return res.status(404).json({message: "Recipe not found"});
         }
         res.status(200).json(recipe);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({message: error.message});
     }
 }
 
@@ -74,16 +91,16 @@ const updateRecipe = async (req, res) => {
                 category,
                 reviews
             },
-            { new: true }
+            {new: true}
         );
 
         if (!updatedRecipe) {
-            return res.status(404).json({ message: "Recipe not found" });
+            return res.status(404).json({message: "Recipe not found"});
         }
 
         res.status(200).json(updatedRecipe);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({message: error.message});
     }
 }
 
@@ -91,12 +108,12 @@ const deleteRecipe = async (req, res) => {
     try {
         const deletedRecipe = await Recipe.findByIdAndDelete(req.params.id);
         if (!deletedRecipe) {
-            return res.status(404).json({ message: "Recipe not found" });
+            return res.status(404).json({message: "Recipe not found"});
         }
-        res.status(200).json({ message: "Recipe deleted successfully" });
+        res.status(200).json({message: "Recipe deleted successfully"});
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({message: error.message});
     }
 }
 
-export { createRecipe, getRecipes, getRecipeById, updateRecipe, deleteRecipe };
+export {createRecipe, getRecipes, getRecipeById, updateRecipe, deleteRecipe};

@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import {ChevronRightIcon} from '@heroicons/vue/20/solid'
 import {onMounted, reactive} from "vue";
-import {stringify} from '@vueuse/docs-utils'
 import {useFetch} from '@vueuse/core'
 import MainLayout from "@/layout/MainLayout.vue";
 
-type Recipe = {
+export type Recipe = {
   _id: string
   name: string
   ingredients: string[]
@@ -19,15 +18,30 @@ type Recipe = {
   updatedAt: string
   __v: number
 }
+
 const state = reactive({
   error: null,
   isFetching: false,
   recipes: [] as Recipe[],
-  search: ''
+  search: '',
+  noResult: false
 })
 
-const searchRecipe = () => {
-  console.log('searchRecipe')
+const searchRecipe = async () => {
+  const url = 'http://localhost:4000/ai/research'
+  state.isFetching = true
+  const {data, isFetching, error} = await useFetch(url).post({message: state.search})
+  state.isFetching = isFetching.value
+  if (error.value) {
+    state.error = error.value
+    console.error(error.value)
+  } else {
+    const recipes = JSON.parse(data.value)
+    if (recipes)
+      state.recipes = JSON.parse(data.value).recipes
+    else
+      state.noResult = true
+  }
 }
 
 
@@ -37,12 +51,11 @@ onMounted(async () => {
   const {data, isFetching, error} = await useFetch(url)
   state.isFetching = isFetching.value
   if (error.value) {
-    console.log('error')
     state.error = error.value
     console.error(error.value)
   } else {
     if (data.value)
-      state.recipes = JSON.parse(data.value)
+      state.recipes = JSON.parse(data.value).splice(0, 6)
   }
 })
 </script>
@@ -68,24 +81,25 @@ onMounted(async () => {
           <h1 class="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">Cook with confidence</h1>
           <p class="mt-6 text-lg leading-8 text-gray-600">Cuisine Connect is the all-in-one platform for home cooks.
             Discover new recipes, plan your meals, and shop for ingredients all in one place.</p>
-          <div class="flex flex-col mt-10 items-start gap-x-6 absolute z-20 space-y-10">
+          <div class="flex flex-col mt-20 items-start gap-x-6 absolute z-20 space-y-10">
             <div class="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
-              <div
-                  class="rounded-xl bg-white p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
+              <div class="rounded-xl bg-white p-2 ring-1 ring-inset ring-gray-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
                 <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Find your Recipe</label>
-                <div class="mt-2">
+                <div class="flex items-center gap-x-2.5 mt-2">
                   <input v-model="state.search" type="search" name="email" id="email"
                          class="block w-[40rem] rounded-md border-0 pl-2 py-2 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:ring-gray-200 sm:text-sm sm:leading-6"
                          placeholder="Gaspacho"/>
+                  <button @click="searchRecipe"
+                          :disabled="!state.search"
+                          class="rounded-md bg-secondary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+                    Search
+                    <ChevronRightIcon
+                        class="w-5 h-5 inline-block ml-1"/>
+                  </button>
                 </div>
               </div>
             </div>
-            <button @click="searchRecipe"
-                    class="rounded-md bg-secondary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
-              Search
-              <ChevronRightIcon
-                  class="w-5 h-5 inline-block ml-1"/>
-            </button>
+
           </div>
         </div>
         <div
@@ -95,37 +109,52 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <div class="bg-white pb-24 sm:pb-32">
+    <div v-if="state.isFetching" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90">
+      <div class="loader"/>
+    </div>
+    <div v-if="state.noResult" class="bg-white pb-24 sm:pb-32">
       <div class="mx-auto max-w-7xl px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
-          <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Best Recipes</h2>
-          <p class="mt-2 text-lg leading-8 text-gray-600">Discover the best recipes from our community of home cooks.
-            From quick and easy weeknight meals to show-stopping dishes for special occasions, we have something for
-            everyone.</p>
+          <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">No recipe</h2>
+          <p class="mt-2 text-lg leading-8 text-gray-600">No recipe found</p>
+        </div>
+      </div>
+    </div>
+    <div v-else-if="state.recipes.length > 0" class="bg-white pb-24 sm:pb-32">
+      <div class="mx-auto max-w-7xl px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            {{ state.recipes.length && state.search ? 'Search result' : 'Popular recipes' }}</h2>
+          <p class="mt-2 text-lg leading-8 text-gray-600">{{
+              state.recipes.length && state.search ? 'Here are the recipes that match your search' : 'Discover the most popular recipes'
+            }}</p>
         </div>
         <div
             class="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           <article v-for="recipe in state.recipes" :key="recipe._id"
                    class="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80">
-            <img :src="recipe.image" :alt="recipe.name" class="absolute inset-0 -z-10 h-full w-full object-cover"/>
-            <div class="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900/70 via-gray-900/20"/>
-            <div class="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10"/>
-            <div class="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm leading-6 text-gray-300">
-              <div class="-ml-4 flex items-center gap-x-4">
-                <svg viewBox="0 0 2 2" class="-ml-0.5 h-0.5 w-0.5 flex-none fill-white/50">
-                  <circle cx="1" cy="1" r="1"/>
-                </svg>
-                <div class="flex gap-x-2.5">
-                  {{ recipe.difficulty }}
+            <RouterLink :to="{name: 'recipe', params: {id: recipe._id}}" class="cursor-pointer"
+                        aria-label="View recipe">
+              <img :src="recipe.image" :alt="recipe.name" class="absolute inset-0 -z-10 h-full w-full object-cover"/>
+              <div class="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900/70 via-gray-900/20"/>
+              <div class="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10"/>
+              <div class="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm leading-6 text-gray-300">
+                <div class="-ml-4 flex items-center gap-x-4">
+                  <svg viewBox="0 0 2 2" class="-ml-0.5 h-0.5 w-0.5 flex-none fill-white/50">
+                    <circle cx="1" cy="1" r="1"/>
+                  </svg>
+                  <div class="flex gap-x-2.5">
+                    {{ recipe.difficulty }}
+                  </div>
                 </div>
               </div>
-            </div>
-            <h3 class="mt-3 text-lg font-semibold leading-6 text-white">
-              <a :href="'/recipe/' + recipe._id" class="relative z-10">
-                <span class="absolute inset-0"/>
-                {{ recipe.name }}
-              </a>
-            </h3>
+              <h3 class="mt-3 text-lg font-semibold leading-6 text-white">
+                <a :href="'/recipe/' + recipe._id" class="relative z-10">
+                  <span class="absolute inset-0"/>
+                  {{ recipe.name }}
+                </a>
+              </h3>
+            </RouterLink>
           </article>
         </div>
       </div>
