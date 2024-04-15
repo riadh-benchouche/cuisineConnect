@@ -16,7 +16,7 @@ const recipeSchema = new mongoose.Schema(
             required: true,
         },
         duration: {
-            type: Number,
+            type: String,
             required: true,
         },
         reviews: [{
@@ -24,10 +24,14 @@ const recipeSchema = new mongoose.Schema(
             ref: 'Review',
             required: false,
         }],
+        steps: [{
+            type: JSON,
+            required: true,
+        }],
         image: {
             type: String,
             required: true,
-        },  
+        },
         difficulty: {
             type: String,
             required: true,

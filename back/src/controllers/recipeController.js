@@ -30,7 +30,7 @@ const createRecipe = async (req, res) => {
 
 const getRecipes = async (req, res) => {
     try {
-        const recipes = await Recipe.find();
+        const recipes = await Recipe.find().populate("ingredients", ["name", "quantity"]).populate("category", ["name"]).populate("reviews", ["rating", "comment"]).exec();
         res.status(200).json(recipes);
     } catch (error) {
         res.status(500).json({ message: error.message });

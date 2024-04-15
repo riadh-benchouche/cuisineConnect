@@ -1,9 +1,13 @@
-const OpenAI = require('openai');
 import Recipe from '../models/recipe.js';
+import OpenAI from "openai";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const openai = new OpenAI({
     apiKey: process.env.KEY_API,
-  });
+
+});
 
 const research = async (req, res) => {
     const message = req.body.message;
@@ -14,8 +18,11 @@ const research = async (req, res) => {
     const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
-            { role: 'system', content: `${recipesJson} est un tableau de recettes en JSON je veux que tu me retournes les recettes dont le name, description ou ingredients inclus un des mots de la recherche ${message}, j'aurais besoin de cette réponse dans un JSON` },
-            { role: 'user', content: message },
+            {
+                role: 'system',
+                content: `${recipesJson} est un tableau de recettes en JSON je veux que tu me retournes les recettes dont le name, description ou ingredients inclus un des mots de la recherche ${message}, j'aurais besoin de cette réponse dans un JSON`
+            },
+            {role: 'user', content: message},
         ],
     });
 
@@ -32,16 +39,16 @@ let discussion = [
 const chatBot = async (req, res) => {
     const question = req.body.question;
 
-    discussion.push({ role: 'user', content: question });
-    
+    discussion.push({role: 'user', content: question});
+
     const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: discussion,
-      });
-      discussion.push({ role: 'assistant', content: response.choices[0].message.content });
-  
-    res.status(200).json({ response: response.choices[0].message.content });
-  };
+    });
+    discussion.push({role: 'assistant', content: response.choices[0].message.content});
+
+    res.status(200).json({response: response.choices[0].message.content});
+};
 
 
 const similarRecipes = async (req, res) => {
@@ -56,8 +63,11 @@ const similarRecipes = async (req, res) => {
     const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
-            { role: 'system', content: `${recipesJson} est un tableau de recettes en JSON je veux que tu me retournes les recettes similaires à la recette ${JSON.stringify(recipe)}, j'aurais besoin de cette réponse dans un JSON` },
-            { role: 'user', content: JSON.stringify(recipe) },
+            {
+                role: 'system',
+                content: `${recipesJson} est un tableau de recettes en JSON je veux que tu me retournes les recettes similaires à la recette ${JSON.stringify(recipe)}, j'aurais besoin de cette réponse dans un JSON`
+            },
+            {role: 'user', content: JSON.stringify(recipe)},
         ],
     });
 
@@ -67,14 +77,17 @@ const similarRecipes = async (req, res) => {
 
 const accompaniements = async (req, res) => {
     const recipeId = req.params.recipeId;
-    
+
     const recipe = await Recipe.findById(recipeId);
 
     const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
-            { role: 'system', content: `Retournes des accompagnements possible de la recette ${JSON.stringify(recipe)}, renvoie cette réponse dans un tableau JSON contenant uniquement les noms des accompagnements (exemple: ['vin', 'tiramisu', 'cheddar'])` },
-            { role: 'user', content: JSON.stringify(recipe) },
+            {
+                role: 'system',
+                content: `Retournes des accompagnements possible de la recette ${JSON.stringify(recipe)}, renvoie cette réponse dans un tableau JSON contenant uniquement les noms des accompagnements (exemple: ['vin', 'tiramisu', 'cheddar'])`
+            },
+            {role: 'user', content: JSON.stringify(recipe)},
         ],
     });
 
@@ -83,4 +96,4 @@ const accompaniements = async (req, res) => {
 };
 
 
-  export { chatBot, research, similarRecipes, accompaniements };
+export {chatBot, research, similarRecipes, accompaniements};

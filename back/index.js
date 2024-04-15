@@ -9,10 +9,10 @@ import ingRouter from './src/routes/ingredientRouter.js';
 import reviewRouter from './src/routes/reviewRouter.js';
 import recipeRouter from './src/routes/recipeRouter.js';
 import chatRouter from './src/routes/aiRouter.js';
-
+import uploadData from "./src/controllers/uploadData.js";
 dotenv.config();
 const corsOptions = {
-    origin: process.env.FRONT_URL,
+    origin: 'http://localhost:5173',
     credentials: true,
 };
 const app = express();
@@ -28,6 +28,7 @@ app.use('/ingredient', ingRouter);
 app.use('/review', reviewRouter);
 app.use('/recipe', recipeRouter);
 app.use('/ai', chatRouter);
+app.use('/upload', uploadData);
 
 try {
     mongoose.connect(process.env.MONGO_URL).then(r => console.log("Connected to MongoDB"));
