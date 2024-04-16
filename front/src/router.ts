@@ -14,7 +14,7 @@ const router = createRouter({
         // TODO: Add routes for login, register, profile and recipe
         {
             path: '/login',
-            component: () => import('./views/HomeView.vue'),
+            component: () => import('./views/LoginView.vue'),
             name: 'login',
             meta: {
                 requiresAuth: false
@@ -30,7 +30,7 @@ const router = createRouter({
         },
         {
             path: '/profile',
-            component: () => import('./views/HomeView.vue'),
+            component: () => import('./views/FavorieView.vue'),
             name: 'profile',
             meta: {
                 requiresAuth: true

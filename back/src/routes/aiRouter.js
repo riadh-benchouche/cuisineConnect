@@ -1,5 +1,5 @@
 import express from "express";
-import { research, chatBot, similarRecipes, accompaniements } from "../controllers/aiController.js";
+import {research, chatBot, similarRecipes, accompaniements, listCourses} from "../controllers/aiController.js";
 
 const router = express.Router();
 
@@ -11,6 +11,6 @@ router.post("/similarRecipes", similarRecipes);
 
 router.post("/accompaniements", accompaniements);
 
-
+router.post("/listCourses", listCourses);
 
 export default router;

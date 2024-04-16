@@ -95,5 +95,24 @@ const accompaniements = async (req, res) => {
 
 };
 
+const listCourses = async (req, res) => {
+    const recipeId = req.body.recipeId;
 
-export {chatBot, research, similarRecipes, accompaniements};
+    const recipe = await Recipe.findById(recipeId);
+
+    const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+            {
+                role: 'system',
+                content: `Générer une liste de courses pour la recette ${JSON.stringify(recipe)}, renvoyer la réponse sous forme de tableau JSON contenant uniquement les éléments de la liste.`
+            },
+            {role: 'user', content: JSON.stringify(recipe)},
+        ],
+    });
+
+    res.status(200).json(JSON.parse(response.choices[0].message.content));
+};
+
+
+export {chatBot, research, similarRecipes, accompaniements, listCourses};

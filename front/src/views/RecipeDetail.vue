@@ -4,6 +4,7 @@ import {StarIcon, ClockIcon, CakeIcon} from '@heroicons/vue/20/solid'
 import MainLayout from "@/layout/MainLayout.vue";
 import {useRouter} from "vue-router";
 import Accompaniments from "@/components/Accompaniments.vue";
+import Courses from "@/components/Courses.vue";
 
 const router = useRouter()
 const state = reactive({
@@ -11,11 +12,15 @@ const state = reactive({
   isFetching: false,
   isFetchingSimilar: false,
   isFetchingAccompaniments: false,
+  isFetchingCourses: false,
   openAccompaniments: false,
+  openCourses: false,
   ratingAverage: 0,
   similarRecipes: [],
   accompaniments: [],
+  courses: [],
   errorAccompaniments: null,
+  errorCourses: null,
   recipe: {
     _id: '',
     name: '',
@@ -29,8 +34,14 @@ const state = reactive({
     createdAt: '',
     updatedAt: '',
     __v: 0
+  },
+  newReview: {
+    comment: '',
+    rating: 0
   }
 })
+
+const token = localStorage.getItem('token')
 
 onMounted(async () => {
   const recipeId = router.currentRoute.value.params.id
@@ -88,11 +99,82 @@ const getAccompaniments = async () => {
         state.isFetchingAccompaniments = false
       })
 }
+
+const getCourses = async () => {
+  const accompaniementUrl = 'http://localhost:4000/ai/listCourses'
+  state.isFetchingCourses = true
+  await fetch(accompaniementUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({recipeId: state.recipe._id})
+  })
+      .then(response => response.json())
+      .then(data => {
+        state.courses = data
+        state.isFetchingCourses = false
+        state.openCourses = true
+      })
+      .catch(error => {
+        state.errorCourses = error
+        state.isFetchingCourses = false
+      })
+}
+
+const addFavorites = async () => {
+  const url = 'http://localhost:4000/auth/addFavorite'
+  await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('token')
+    },
+    body: JSON.stringify({recipeId: state.recipe._id})
+  })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+      })
+      .catch(error => {
+        console.error(error)
+      })
+}
+
+const submitReview = async () => {
+  const url = 'http://localhost:4000/review'
+  await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      userId: JSON.parse(localStorage.getItem('user'))._id,
+      recipeId: state.recipe._id,
+      comment: state.newReview.comment,
+      rating: state.newReview.rating
+    })
+  })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+      })
+      .catch(error => {
+        console.error(error)
+      })
+      .finally(() => {
+        state.newReview.comment = '';
+        state.newReview.rating = 0;
+      })
+}
 </script>
 
 <template>
   <Accompaniments :on-close="() => state.openAccompaniments = false" :open="state.openAccompaniments"
                   :recipeName="state.recipe.name" :accompaniments="state.accompaniments"/>
+
+  <Courses :on-close="() => state.openCourses = false" :open="state.openCourses"
+           :recipeName="state.recipe.name" :courses="state.courses"/>
   <MainLayout>
     <div v-if="state.isFetching" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90">
       <div class="loader"/>
@@ -100,29 +182,47 @@ const getAccompaniments = async () => {
     <div v-else
          class="mx-auto mt-20 px-4 pb-16 sm:px-6 sm:pb-24 max-w-7xl lg:px-8">
       <div class="lg:grid lg:auto-rows-min lg:grid-cols-12 lg:gap-x-8">
+
         <div class="lg:col-span-5 lg:col-start-8">
+
           <div class="flex justify-between">
-            <h1 class="text-xl font-medium text-gray-900">{{ state.recipe.name }}</h1>
+            <div class="flex items-center justify-between space-x-2">
+              <h1 class="text-xl font-medium text-gray-900">{{ state.recipe.name }}</h1>
+
+              <button type="button" @click="addFavorites"
+                      class="flex items-center justify-center rounded-full border border-transparent bg-yellow-400 p-2 text-base font-medium text-white hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
+                <StarIcon class="h-5 w-5 flex-shrink-0 text-white-400" aria-hidden="true"/>
+              </button>
+
+            </div>
+
             <span
                 class="inline-flex items-center rounded-full bg-secondary-50 px-2 py-1 text-xs font-medium text-secondary-600 ring-1 ring-inset ring-secondary-500/10">
               {{ state.recipe.category.name }}
+
             </span>
+
+
           </div>
           <!-- Reviews -->
           <div class="mt-4">
             <h2 class="sr-only">Reviews</h2>
             <div class="flex items-center">
+
               <p class="text-sm text-gray-700">
                 {{ state.recipe.reviews.length }} reviews
                 <span class="sr-only"> out of 5 stars</span>
               </p>
+
               <div class="ml-1 flex items-center">
                 <StarIcon v-for="rating in [0, 1, 2, 3, 4]" :key="rating"
                           :class="[state.ratingAverage > rating ? 'text-yellow-400' : 'text-gray-200', 'h-5 w-5 flex-shrink-0']"
                           aria-hidden="true"/>
               </div>
+
             </div>
           </div>
+
         </div>
 
         <!-- Image gallery -->
@@ -136,12 +236,21 @@ const getAccompaniments = async () => {
         </div>
 
         <div class="mt-8 lg:col-span-5">
-          <button type="button" @click="getAccompaniments"
-                  class="mt-8 flex w-full items-center justify-center rounded-md border border-transparent bg-secondary-600 px-8 py-3 text-base font-medium text-white hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
-            {{
-              state.errorAccompaniments ? 'Error' : state.isFetchingAccompaniments ? 'Loading...' : 'Get accompaniments'
-            }}
-          </button>
+          <div class="flex flex-1 justify-center items-center space-x-2">
+            <button type="button" @click="getAccompaniments"
+                    class="mt-8 flex w-full items-center justify-center rounded-md border border-transparent bg-secondary-600 px-8 py-3 text-base font-medium text-white hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
+              {{
+                state.errorAccompaniments ? 'Error' : state.isFetchingAccompaniments ? 'Loading...' : 'Get accompaniments'
+              }}
+            </button>
+
+            <button type="button" @click="getCourses"
+                    class="mt-8 flex w-full items-center justify-center rounded-md border border-transparent bg-primary-600 px-8 py-3 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
+              {{
+                state.errorCourses ? 'Error' : state.isFetchingCourses ? 'Loading...' : 'Get courses'
+              }}
+            </button>
+          </div>
 
           <!-- Product details -->
           <div class="mt-10">
@@ -190,6 +299,34 @@ const getAccompaniments = async () => {
           </section>
         </div>
       </div>
+
+      <section v-if="token"
+               class="mt-16 sm:mt-24">
+        <h2 class="text-lg font-medium text-gray-900">Add a review</h2>
+        <form @submit.prevent="submitReview" class="mt-4 space-y-4">
+          <div>
+            <label for="comment" class="block text-sm font-medium text-gray-700">Comment</label>
+            <textarea id="comment" v-model="state.newReview.comment" name="comment" rows="3"
+                      class="mt-1 block w-full border-[1px] border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm"></textarea>
+          </div>
+          <div>
+            <label for="rating" class="block text-sm font-medium text-gray-700">Rating</label>
+            <select id="rating" v-model="state.newReview.rating" name="rating"
+                    class="mt-1 block my-2 w-full border-[1px] border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+              <option value="1" class="py-2">⭐</option>
+              <option value="2">⭐⭐</option>
+              <option value="3">⭐⭐⭐</option>
+              <option value="4">⭐⭐⭐⭐</option>
+              <option value="5">⭐⭐⭐⭐⭐</option>
+            </select>
+          </div>
+          <button type="submit"
+                  class="mt-4 inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Add Review
+          </button>
+        </form>
+      </section>
+
 
       <!-- Reviews -->
       <section aria-labelledby="reviews-heading" class="mt-16 sm:mt-24" v-if="state.recipe.reviews.length > 0">

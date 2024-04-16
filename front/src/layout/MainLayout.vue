@@ -4,11 +4,21 @@ import {UserIcon} from '@heroicons/vue/24/outline'
 import {ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon} from "@heroicons/vue/24/outline";
 import {Popover, PopoverButton, PopoverPanel} from '@headlessui/vue'
 import {reactive} from "vue";
+import {useRouter} from "vue-router";
 
+const router = useRouter()
+
+const token = localStorage.getItem('token')
 
 const userNavigation = [
-  {name: 'My favorites', href: '#'},
-  {name: 'Sign out', href: '#'},
+  {name: 'My favorites', action: () => router.push('/profile')},
+  {
+    name: 'Sign out', action: () => {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      router.push('/login')
+    }
+  }
 ]
 
 const state = reactive({
@@ -58,7 +68,12 @@ const submitMessage = async () => {
             <!-- Profile dropdown -->
             <Menu as="div" class="relative ml-3">
               <div>
+                <RouterLink v-if="!token"
+                            to="/login" class="text-sm font-medium text-gray-900 hover:text-gray-900">
+                  Sign in
+                </RouterLink>
                 <MenuButton
+                    v-else
                     class="relative flex max-w-xs items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
                   <span class="absolute -inset-1.5"/>
                   <span class="sr-only">Open user menu</span>
@@ -74,10 +89,11 @@ const submitMessage = async () => {
                 <MenuItems
                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <MenuItem v-for="item in userNavigation" :key="item.name" v-slot="{ active }">
-                    <a :href="item.href"
-                       :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{
+                    <button @click="item.action"
+                            :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{
                         item.name
-                      }}</a>
+                      }}
+                    </button>
                   </MenuItem>
                 </MenuItems>
               </transition>
