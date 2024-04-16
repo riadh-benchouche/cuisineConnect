@@ -12,7 +12,7 @@ const openai = new OpenAI({
 const research = async (req, res) => {
     const message = req.body.message;
 
-    const recipes = await Recipe.find({})
+    const recipes = await Recipe.find({});
     const recipesJson = JSON.stringify(recipes);
 
     const response = await openai.chat.completions.create({
@@ -20,7 +20,7 @@ const research = async (req, res) => {
         messages: [
             {
                 role: 'system',
-                content: `${recipesJson} est un tableau de recettes en JSON je veux que tu me retournes les recettes dont le name, description ou ingredients inclus un des mots de la recherche ${message}, j'aurais besoin de cette réponse dans un JSON`
+                content: `${recipesJson} est un tableau de recettes je veux que tu me retournes les recettes dont le name, description ou ingredients inclus un des mots de la recherche ${message}, j'aurais besoin de cette réponse dans un JSON`
             },
             {role: 'user', content: message},
         ],
