@@ -5,6 +5,7 @@ import MainLayout from "@/layout/MainLayout.vue";
 import {useRouter} from "vue-router";
 import Accompaniments from "@/components/Accompaniments.vue";
 import Courses from "@/components/Courses.vue";
+import {showToast} from "../utils/toast";
 
 const router = useRouter()
 const state = reactive({
@@ -134,9 +135,10 @@ const addFavorites = async () => {
   })
       .then(response => response.json())
       .then(data => {
-        console.log(data)
+        showToast('Recipe added to favorites', 'success')
       })
       .catch(error => {
+        showToast('An error occurred', 'error')
         console.error(error)
       })
 }
@@ -189,9 +191,9 @@ const submitReview = async () => {
             <div class="flex items-center justify-between space-x-2">
               <h1 class="text-xl font-medium text-gray-900">{{ state.recipe.name }}</h1>
 
-              <button type="button" @click="addFavorites"
-                      class="flex items-center justify-center rounded-full border border-transparent bg-yellow-400 p-2 text-base font-medium text-white hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
-                <StarIcon class="h-5 w-5 flex-shrink-0 text-white-400" aria-hidden="true"/>
+              <button v-if="token" type="button" @click="addFavorites"
+                      class="flex items-center justify-center rounded-full border border-transparent bg-yellow-400 p-1 text-base font-medium text-white hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
+                <StarIcon class="h-4 w-4 flex-shrink-0 text-white-400" aria-hidden="true"/>
               </button>
 
             </div>
