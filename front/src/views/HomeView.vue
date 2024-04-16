@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {ChevronRightIcon} from '@heroicons/vue/20/solid'
 import {onMounted, reactive} from "vue";
-import {useFetch} from '@vueuse/core'
 import MainLayout from "@/layout/MainLayout.vue";
 
 export type Recipe = {
@@ -30,33 +29,40 @@ const state = reactive({
 const searchRecipe = async () => {
   const url = 'http://localhost:4000/ai/research'
   state.isFetching = true
-  const {data, isFetching, error} = await useFetch(url).post({message: state.search})
-  state.isFetching = isFetching.value
-  if (error.value) {
-    state.error = error.value
-    console.error(error.value)
-  } else {
-    const recipes = JSON.parse(data.value)
-    if (recipes)
-      state.recipes = JSON.parse(data.value).recipes
-    else
-      state.noResult = true
-  }
+  await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({message: state.search})
+  })
+      .then(response => response.json())
+      .then(data => {
+        state.recipes = data
+        state.isFetching = false
+      })
+      .catch((error) => {
+        state.error = error
+        state.isFetching = false
+        console.error('Error:', error)
+      })
 }
 
 
 onMounted(async () => {
   const url = 'http://localhost:4000/recipe'
   state.isFetching = true
-  const {data, isFetching, error} = await useFetch(url)
-  state.isFetching = isFetching.value
-  if (error.value) {
-    state.error = error.value
-    console.error(error.value)
-  } else {
-    if (data.value)
-      state.recipes = JSON.parse(data.value).splice(0, 6)
-  }
+  await fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        state.recipes = data.splice(0, 6)
+        state.isFetching = false
+      })
+      .catch((error) => {
+        state.error = error
+        state.isFetching = false
+        console.error('Error:', error)
+      })
 })
 </script>
 
@@ -87,7 +93,7 @@ onMounted(async () => {
                 <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Find your Recipe</label>
                 <div class="flex items-center gap-x-2.5 mt-2">
                   <input v-model="state.search" type="search" name="email" id="email"
-                         class="block w-[40rem] rounded-md border-0 pl-2 py-2 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:ring-gray-200 sm:text-sm sm:leading-6"
+                         class="block w-[40rem] rounded-md border-0 px-2 py-2 text-gray-900 shadow-sm ring-1 ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-secondary-600 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:ring-gray-200 sm:text-sm sm:leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-secondary-600"
                          placeholder="Gaspacho"/>
                   <button @click="searchRecipe"
                           :disabled="!state.search"
@@ -112,7 +118,7 @@ onMounted(async () => {
     <div v-if="state.isFetching" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90">
       <div class="loader"/>
     </div>
-    <div v-if="state.noResult" class="bg-white pb-24 sm:pb-32">
+    <div v-else-if="state.noResult" class="bg-white pb-24 sm:pb-32">
       <div class="mx-auto max-w-7xl px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
           <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">No recipe</h2>
@@ -120,7 +126,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-    <div v-else-if="state.recipes.length > 0" class="bg-white pb-24 sm:pb-32">
+    <div v-else-if="state.recipes" class="bg-white pb-24 sm:pb-32">
       <div class="mx-auto max-w-7xl px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
           <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
