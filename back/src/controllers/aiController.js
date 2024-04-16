@@ -52,7 +52,7 @@ const chatBot = async (req, res) => {
 
 
 const similarRecipes = async (req, res) => {
-    const recipeId = req.params.recipeId;
+    const recipeId = req.body.recipeId;
 
     const recipes = await Recipe.find({});
 
@@ -76,7 +76,7 @@ const similarRecipes = async (req, res) => {
 }
 
 const accompaniements = async (req, res) => {
-    const recipeId = req.params.recipeId;
+    const recipeId = req.body.recipeId;
 
     const recipe = await Recipe.findById(recipeId);
 
@@ -85,7 +85,7 @@ const accompaniements = async (req, res) => {
         messages: [
             {
                 role: 'system',
-                content: `Retournes des accompagnements possible de la recette ${JSON.stringify(recipe)}, renvoie cette réponse dans un tableau JSON contenant uniquement les noms des accompagnements (exemple: ['vin', 'tiramisu', 'cheddar'])`
+                content: `Retournes des proposition d'accompagniements pour la recette ${JSON.stringify(recipe)}, renvoie cette réponse dans un tableau JSON contenant uniquement les noms des accompagnements`
             },
             {role: 'user', content: JSON.stringify(recipe)},
         ],

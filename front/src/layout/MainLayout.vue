@@ -14,10 +14,12 @@ const userNavigation = [
         <div class="flex h-16 justify-between">
           <div class="flex">
             <div class="flex flex-shrink-0 items-center">
-              <img class="block h-10 w-auto lg:hidden"
-                   src="/logo-compact.png" alt="Your Company"/>
-              <img class="hidden h-10 w-auto lg:block"
-                   src="/logo-compact.png" alt="Your Company"/>
+              <RouterLink to="/" class="flex items-center cursor-pointer">
+                <img class="block h-10 w-auto lg:hidden"
+                     src="/logo-compact.png" alt="Your Company"/>
+                <img class="hidden h-10 w-auto lg:block"
+                     src="/logo-compact.png" alt="Your Company"/>
+              </RouterLink>
             </div>
           </div>
           <div class="ml-6 flex items-center">

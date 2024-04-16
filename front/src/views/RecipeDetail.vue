@@ -1,26 +1,21 @@
 <script setup>
-import {onMounted, reactive, ref} from 'vue'
-import {
-  RadioGroup,
-  RadioGroupLabel,
-  RadioGroupOption,
-} from '@headlessui/vue'
-import {
-  CurrencyDollarIcon,
-  GlobeAmericasIcon,
-} from '@heroicons/vue/24/outline'
+import {onMounted, reactive} from 'vue'
 import {StarIcon, ClockIcon, CakeIcon} from '@heroicons/vue/20/solid'
 import MainLayout from "@/layout/MainLayout.vue";
 import {useRouter} from "vue-router";
+import Accompaniments from "@/components/Accompaniments.vue";
 
 const router = useRouter()
 const state = reactive({
   error: null,
   isFetching: false,
   isFetchingSimilar: false,
+  isFetchingAccompaniments: false,
+  openAccompaniments: false,
   ratingAverage: 0,
   similarRecipes: [],
   accompaniments: [],
+  errorAccompaniments: null,
   recipe: {
     _id: '',
     name: '',
@@ -37,12 +32,12 @@ const state = reactive({
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
   const recipeId = router.currentRoute.value.params.id
   const url = `http://localhost:4000/recipe/${recipeId}`
   const urlSimilar = `http://localhost:4000/ai/similarRecipes`
   state.isFetching = true
-  fetch(url)
+  await fetch(url)
       .then(response => response.json())
       .then(data => {
         state.recipe = data
@@ -54,7 +49,7 @@ onMounted(() => {
         state.isFetching = false
       })
   state.isFetchingSimilar = true
-  fetch(urlSimilar, {
+  await fetch(urlSimilar, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -72,75 +67,32 @@ onMounted(() => {
       })
 })
 
-
-const product = {
-  name: 'Basic Tee',
-  price: '$35',
-  href: '#',
-  breadcrumbs: [
-    {id: 1, name: 'Women', href: '#'},
-    {id: 2, name: 'Clothing', href: '#'},
-  ],
-  images: [
-    {
-      id: 1,
-      imageSrc: 'https://tailwindui.com/img/ecommerce-images/product-page-01-featured-product-shot.jpg',
-      imageAlt: "Back of women's Basic Tee in black.",
-      primary: true,
+const getAccompaniments = async () => {
+  const accompaniementUrl = 'http://localhost:4000/ai/accompaniements'
+  state.isFetchingAccompaniments = true
+  await fetch(accompaniementUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
     },
-    {
-      id: 2,
-      imageSrc: 'https://tailwindui.com/img/ecommerce-images/product-page-01-product-shot-01.jpg',
-      imageAlt: "Side profile of women's Basic Tee in black.",
-      primary: false,
-    },
-    {
-      id: 3,
-      imageSrc: 'https://tailwindui.com/img/ecommerce-images/product-page-01-product-shot-02.jpg',
-      imageAlt: "Front of women's Basic Tee in black.",
-      primary: false,
-    },
-  ],
-  colors: [
-    {name: 'Black', bgColor: 'bg-gray-900', selectedColor: 'ring-gray-900'},
-    {name: 'Heather Grey', bgColor: 'bg-gray-400', selectedColor: 'ring-gray-400'},
-  ],
-  sizes: [
-    {name: 'XXS', inStock: true},
-    {name: 'XS', inStock: true},
-    {name: 'S', inStock: true},
-    {name: 'M', inStock: true},
-    {name: 'L', inStock: true},
-    {name: 'XL', inStock: false},
-  ],
-  description: `
-    <p>The Basic tee is an honest new take on a classic. The tee uses super soft, pre-shrunk cotton for true comfort and a dependable fit. They are hand cut and sewn locally, with a special dye technique that gives each tee it's own look.</p>
-    <p>Looking to stock your closet? The Basic tee also comes in a 3-pack or 5-pack at a bundle discount.</p>
-  `,
-  details: [
-    'Only the best materials',
-    'Ethically and locally made',
-    'Pre-washed and pre-shrunk',
-    'Machine wash cold with similar colors',
-  ],
+    body: JSON.stringify({recipeId: state.recipe._id})
+  })
+      .then(response => response.json())
+      .then(data => {
+        state.accompaniments = data
+        state.isFetchingAccompaniments = false
+        state.openAccompaniments = true
+      })
+      .catch(error => {
+        state.errorAccompaniments = error
+        state.isFetchingAccompaniments = false
+      })
 }
-
-const relatedProducts = [
-  {
-    id: 1,
-    name: 'Basic Tee',
-    href: '#',
-    imageSrc: 'https://tailwindui.com/img/ecommerce-images/product-page-01-related-product-02.jpg',
-    imageAlt: "Front of men's Basic Tee in white.",
-    price: '$35',
-    color: 'Aspen White',
-  },
-  // More products...
-]
-const selectedColor = ref(product.colors[0])
-const selectedSize = ref(product.sizes[2])
 </script>
+
 <template>
+  <Accompaniments :on-close="() => state.openAccompaniments = false" :open="state.openAccompaniments"
+                  :recipeName="state.recipe.name" :accompaniments="state.accompaniments"/>
   <MainLayout>
     <div v-if="state.isFetching" class="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-90">
       <div class="loader"/>
@@ -184,9 +136,11 @@ const selectedSize = ref(product.sizes[2])
         </div>
 
         <div class="mt-8 lg:col-span-5">
-          <button type="submit"
+          <button type="button" @click="getAccompaniments"
                   class="mt-8 flex w-full items-center justify-center rounded-md border border-transparent bg-secondary-600 px-8 py-3 text-base font-medium text-white hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2">
-            See Accompanying Recipes
+            {{
+              state.errorAccompaniments ? 'Error' : state.isFetchingAccompaniments ? 'Loading...' : 'Get accompaniments'
+            }}
           </button>
 
           <!-- Product details -->
@@ -207,7 +161,7 @@ const selectedSize = ref(product.sizes[2])
 
           <div class="mt-8 border-t border-gray-200 pt-8">
             <h2 class="text-sm font-medium text-gray-900">Steps</h2>
-            <div class="prose prose-sm mt-4 text-gray-500">
+            <div class="prose prose-sm mt-4 text-gray-500 ml-5">
               <ul role="list">
                 <li v-for="(step, index) in state.recipe.steps" :key="index" class="mb-2 list-decimal">
                   {{ step }}
