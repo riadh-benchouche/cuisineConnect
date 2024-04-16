@@ -7,6 +7,7 @@ const createReview = async (req, res) => {
 
         const newReview = new Review({user: userId, recipe: recipeId, comment, rating});
         await newReview.save();
+        await Recipe.findByIdAndUpdate(recipeId, {$push: {reviews: newReview._id}});
 
         res.status(201).json(newReview);
     } catch (error) {
@@ -39,10 +40,7 @@ const updateReview = async (req, res) => {
     try {
         const {user, recipe, comment, rating} = req.body;
         const updatedReview = await Review.findByIdAndUpdate(req.params.id, {
-            user,
-            recipe,
-            comment,
-            rating
+            user, recipe, comment, rating
         }, {new: true});
         if (!updatedReview) {
             return res.status(404).json({message: "Review not found"});
