@@ -97,7 +97,7 @@ onMounted(async () => {
                          placeholder="Gaspacho"/>
                   <button @click="searchRecipe"
                           :disabled="!state.search"
-                          class="rounded-md bg-secondary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600">
+                          class="rounded-md bg-secondary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-secondary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary-600 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500 disabled:ring-gray-200">
                     Search
                     <ChevronRightIcon
                         class="w-5 h-5 inline-block ml-1"/>
